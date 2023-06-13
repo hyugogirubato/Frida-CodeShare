@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.2 hyugogirubato
+ ** Android Native Interceptor frida script v1.3 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  **
- ** Update: Added automatic hex display if compatible.
+ ** Update: Added detection of a pointer as an argument.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -97,16 +97,21 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
             console.log(`${colorKey}  --> [${argIndex}] Integer: ${intValue}${COLORS.reset}`);
         }
 
-        // Hex
         const hexData = Array.from(byteArrayView, byte => byte.toString(16).padStart(2, "0")).join("");
-        if ([32, 40, 48, 64].includes(hexData.length) || hexValue) {
-            console.log(`${colorKey}  --> [${argIndex}] Hex: ${hexData}${COLORS.reset}`);
-        }
+        if (hexData.length === 10) {
+            // Pointer
+            console.log(`${colorKey}  --> [${argIndex}] Pointer: 0x${hexData}${COLORS.reset}`);
+        } else {
+            // Hex
+            if ([32, 40, 48, 64].includes(hexData.length) || hexValue) {
+                console.log(`${colorKey}  --> [${argIndex}] Hex: ${hexData}${COLORS.reset}`);
+            }
 
-        // Base64
-        const byteBuffer = Java.array("byte", byteArrayView);
-        const base64Data = BASE64.getEncoder().encodeToString(byteBuffer);
-        console.log(`${colorKey}  --> [${argIndex}] Base64: ${base64Data}${COLORS.reset}`);
+            // Base64
+            const byteBuffer = Java.array("byte", byteArrayView);
+            const base64Data = BASE64.getEncoder().encodeToString(byteBuffer);
+            console.log(`${colorKey}  --> [${argIndex}] Base64: ${base64Data}${COLORS.reset}`);
+        }
     }
 }
 
