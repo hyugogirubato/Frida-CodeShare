@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.0.2] - 2023-06-16
 
+### Fixed
+
 - **Crypto**: Fixed crypto and decoding operations.
 
 ## [1.0.1] - 2023-06-13
