@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Crypto Interceptor frida script v1.1 hyugogirubato
+ ** Android Crypto Interceptor frida script v1.2 hyugogirubato
  **
  ** frida -D "DEVICE" -l "crypto.js" -f "PACKAGE"
  **
- ** Update: Syntax upgrade to the latest JS version.
+ ** Update: Fixed crypto and decoding operations.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -44,11 +44,11 @@ const randomColor = () => {
 }
 
 const bytesToString = (bytes) => {
-    return STRING.$new(bytes).toString();
+    return bytes ? STRING.$new(bytes).toString() : undefined;
 }
 
 const bytesToBase64 = (bytes) => {
-    return BASE64.getEncoder().encodeToString(bytes);
+    return bytes ? BASE64.getEncoder().encodeToString(bytes) : undefined;
 }
 
 const showVariable = (module, items, colorKey) => {
@@ -343,10 +343,10 @@ setTimeout(function () {
                     return this.getInstance(arg0, arg1);
                 };
 
-                cipher.doFinal.overload("[B").implementation = function (input) {
-                    const inputBase64 = bytesToBase64(input);
-                    const inputString = bytesToString(input);
-                    const output = this.doFinal.overload("[B").call(this, input);
+                cipher.doFinal.overload("[B").implementation = function (arg0) {
+                    const inputBase64 = bytesToBase64(arg0);
+                    const inputString = bytesToString(arg0);
+                    const output = this.doFinal.overload("[B").call(this, arg0);
                     const outputBase64 = bytesToBase64(output);
                     showVariable("cipher.doFinal", [
                         {key: "Input Base64", value: inputBase64},
@@ -356,10 +356,11 @@ setTimeout(function () {
                     return output;
                 };
 
-                cipher.doFinal.overload("[B", "int").implementation = function (input) {
-                    const inputBase64 = bytesToBase64(input);
-                    const inputString = bytesToString(input);
-                    const output = this.doFinal.overload("[B", "int").call(this, input);
+
+                cipher.doFinal.overload("[B", "int").implementation = function (arg0, arg1) {
+                    const inputBase64 = bytesToBase64(arg0);
+                    const inputString = bytesToString(arg0);
+                    const output = this.doFinal.overload("[B", "int").call(this, arg0, arg1);
                     const outputBase64 = bytesToBase64(output);
                     showVariable("cipher.doFinal", [
                         {key: "Input Base64", value: inputBase64},
@@ -369,10 +370,10 @@ setTimeout(function () {
                     return output;
                 }
 
-                cipher.doFinal.overload("[B", "int", "int").implementation = function (input) {
-                    const inputBase64 = bytesToBase64(input);
-                    const inputString = bytesToString(input);
-                    const output = this.doFinal.overload("[B", "int", "int").call(this, input);
+                cipher.doFinal.overload("[B", "int", "int").implementation = function (arg0, arg1, arg2) {
+                    const inputBase64 = bytesToBase64(arg0);
+                    const inputString = bytesToString(arg0);
+                    const output = this.doFinal.overload("[B", "int", "int").call(this, arg0, arg1, arg2);
                     const outputBase64 = bytesToBase64(output);
                     showVariable("cipher.doFinal", [
                         {key: "Input Base64", value: inputBase64},
@@ -382,10 +383,10 @@ setTimeout(function () {
                     return output;
                 }
 
-                cipher.doFinal.overload("[B", "int", "int", "[B").implementation = function (input) {
-                    const inputBase64 = bytesToBase64(input);
-                    const inputString = bytesToString(input);
-                    const output = this.doFinal.overload("[B", "int", "int", "[B").call(this, input);
+                cipher.doFinal.overload("[B", "int", "int", "[B").implementation = function (arg0, arg1, arg2, arg3) {
+                    const inputBase64 = bytesToBase64(arg0);
+                    const inputString = bytesToString(arg0);
+                    const output = this.doFinal.overload("[B", "int", "int", "[B").call(this, arg0, arg1, arg2, arg3);
                     const outputBase64 = bytesToBase64(output);
                     showVariable("cipher.doFinal", [
                         {key: "Input Base64", value: inputBase64},
@@ -395,10 +396,10 @@ setTimeout(function () {
                     return output;
                 }
 
-                cipher.doFinal.overload("[B", "int", "int", "[B", "int").implementation = function (input) {
-                    const inputBase64 = bytesToBase64(input);
-                    const inputString = bytesToString(input);
-                    const output = this.doFinal.overload("[B", "int", "int", "[B", "int").call(this, input);
+                cipher.doFinal.overload("[B", "int", "int", "[B", "int").implementation = function (arg0, arg1, arg2, arg3, arg4) {
+                    const inputBase64 = bytesToBase64(arg0);
+                    const inputString = bytesToString(arg0);
+                    const output = this.doFinal.overload("[B", "int", "int", "[B", "int").call(this, arg0, arg1, arg2, arg3, arg4);
                     const outputBase64 = bytesToBase64(output);
                     showVariable("cipher.doFinal", [
                         {key: "Input Base64", value: inputBase64},
