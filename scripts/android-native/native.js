@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.3 hyugogirubato
+ ** Android Native Interceptor frida script v1.4 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  **
- ** Update: Added detection of a pointer as an argument.
+ ** Update: Added "UUID" support for hex format.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -35,6 +35,11 @@ const randomColor = () => {
     const colorKeys = Object.keys(COLORS).filter(key => key !== "reset" && key !== "red");
     index = (index + 1) % colorKeys.length;
     return COLORS[colorKeys[index]];
+}
+
+const isUUID = (hex) => {
+    const uuidPattern = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
+    return uuidPattern.test(hex);
 }
 
 const searchLibraries = () => {
@@ -103,7 +108,7 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
             console.log(`${colorKey}  --> [${argIndex}] Pointer: 0x${hexData}${COLORS.reset}`);
         } else {
             // Hex
-            if ([32, 40, 48, 64].includes(hexData.length) || hexValue) {
+            if ((!hexData.includes("-") && [32, 40, 48, 64].includes(hexData.length)) || isUUID(hexData) || hexValue) {
                 console.log(`${colorKey}  --> [${argIndex}] Hex: ${hexData}${COLORS.reset}`);
             }
 

@@ -1,13 +1,14 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Crypto Interceptor frida script v1.2 hyugogirubato
+ ** Android Crypto Interceptor frida script v1.3 hyugogirubato
  **
  ** frida -D "DEVICE" -l "crypto.js" -f "PACKAGE"
  **
- ** Update: Fixed crypto and decoding operations.
+ ** Update: Added Hex output when the size matches a classic standard.
  **
  ***@@@---@@@@******************************************************************
  */
+
 
 // Custom params
 const MODE = {
@@ -44,17 +45,51 @@ const randomColor = () => {
 }
 
 const bytesToString = (bytes) => {
-    return bytes ? STRING.$new(bytes).toString() : undefined;
+    return bytes === null ? null : STRING.$new(bytes).toString();
 }
 
 const bytesToBase64 = (bytes) => {
-    return bytes ? BASE64.getEncoder().encodeToString(bytes) : undefined;
+    if (bytes !== null) {
+        try {
+            return BASE64.getEncoder().encodeToString(bytes);
+        } catch {
+            return BASE64.getEncoder().encodeToString([bytes & 0xff]);
+        }
+    }
+    return null;
 }
 
-const showVariable = (module, items, colorKey) => {
+const isUUID = (hex) => {
+    const uuidPattern = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
+    return uuidPattern.test(hex);
+}
+
+const Base64ToHex = (base64) => {
+    const bytes = BASE64.getDecoder().decode(base64);
+    let hexData = "";
+    for (let i = 0; i < bytes.length; i++) {
+        let value = bytes[i].toString(16);
+        if (value.length % 2 === 1) {
+            value = "0" + value
+        }
+        hexData += value
+    }
+    return hexData;
+}
+
+const showVariable = (module, items, colorKey, hexValue = false) => {
     console.log(`${colorKey}[+] onEnter: ${module}${COLORS.reset}`);
     for (let i = 0; i < items.length; i++) {
         console.log(`${colorKey}  --> [${i}] ${items[i].key}: ${items[i].value}${COLORS.reset}`);
+
+        // Hex
+        if (items[i].key.includes("Base64") && items[i].value !== null) {
+            const key = items[i].key.replace("Base64", "HEX");
+            const value = Base64ToHex(items[i].value);
+            if ((!value.includes("-") && [32, 40, 48, 64].includes(value.length)) || isUUID(value) || hexValue) {
+                console.log(`${colorKey}  --> [${i}] ${key}: ${value}${COLORS.reset}`);
+            }
+        }
     }
     console.log(`${colorKey}[-] onLeave: ${module}${COLORS.reset}`);
 }
@@ -508,7 +543,7 @@ setTimeout(function () {
                 }
 
                 useKeyGen.build.implementation = function () {
-                    showVariable("KeyGenParameterSpec.build", [], showVariable);
+                    showVariable("KeyGenParameterSpec.build", [], colorKey);
                     return useKeyGen.build.call(this);
                 }
             }
