@@ -60,12 +60,10 @@ const randomColor = () => {
 
 
 const rudimentaryFix = (typeName) => {
-    if (typeName) {
-        if (typeName === "boolean") {
-            return true;
-        } else if (typeName !== "void") {
-            return null;
-        }
+    if (typeName === "boolean") {
+        return true;
+    } else if (typeName !== "void") {
+        return null;
     }
 }
 
