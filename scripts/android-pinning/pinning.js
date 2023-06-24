@@ -113,7 +113,7 @@ setTimeout(function () {
                                 };
                             } catch (e) {
                                 // Dynamic patching via implementation does not works, then trying via function overloading
-                                // console.log("[!] The uncommon SSL Pinning method has more than one overload");
+                                console.log(`${COLORS.red}[!] The uncommon SSL Pinning method has more than one overload${COLORS.reset}`);
                                 if (String(e).includes(".overload")) {
                                     const splittedList = String(e).split(".overload");
                                     for (let i = 2; i < splittedList.length; i++) {
