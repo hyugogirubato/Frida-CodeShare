@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.4 hyugogirubato
+ ** Android Native Interceptor frida script v1.5 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  **
- ** Update: Added "UUID" support for hex format.
+ ** Update: Added multi-thread support for base64 conversion.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -20,7 +20,6 @@ const FUNCTION = true; // attach functions
 
 
 let index = 0; // color index
-const BASE64 = Java.use("java.util.Base64");
 const COLORS = {
     red: '\x1b[31m',
     green: '\x1b[32m',
@@ -113,9 +112,11 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
             }
 
             // Base64
-            const byteBuffer = Java.array("byte", byteArrayView);
-            const base64Data = BASE64.getEncoder().encodeToString(byteBuffer);
-            console.log(`${colorKey}  --> [${argIndex}] Base64: ${base64Data}${COLORS.reset}`);
+            Java.perform(function () {
+                const byteBuffer = Java.array("byte", byteArrayView);
+                const base64Data = Java.use("java.util.Base64").getEncoder().encodeToString(byteBuffer);
+                console.log(`${colorKey}  --> [${argIndex}] Base64: ${base64Data}${COLORS.reset}`);
+            });
         }
     }
 }
