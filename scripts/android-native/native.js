@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.5 hyugogirubato
+ ** Android Native Interceptor frida script v1.6 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  **
- ** Update: Added multi-thread support for base64 conversion.
+ ** Update: Added recursive display of function arguments.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -17,6 +17,7 @@ const INCLUDES = ["selectedFunction"]; // empty for intercept everything
 const EXCLUDES = []; // empty for intercept everything
 const VARIABLE = true;  // attach variables
 const FUNCTION = true; // attach functions
+const RECURSIVE = false; // arguments of the function in output
 
 
 let index = 0; // color index
@@ -124,6 +125,7 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
 const attachFunction = (module) => {
     console.log(`[*] Module attached: ${module["name"]}`);
     const colorKey = randomColor();
+    const params = [];
     Interceptor.attach(module["address"], {
         onEnter: function (args) {
             console.log(`${colorKey}[+] onEnter: ${module["name"]}${COLORS.reset}`);
@@ -134,11 +136,17 @@ const attachFunction = (module) => {
                     break;
                 }
                 showVariable(args[i], colorKey, i, false);
+                params.push(args[i]);
             }
         },
         onLeave: function (retval) {
             console.log(`${colorKey}[-] onLeave: ${module["name"]}${COLORS.reset}`);
-            showVariable(retval, colorKey, 0, false);
+            if (RECURSIVE) {
+                for (let i = 0; i < params.length; i++) {
+                    showVariable(params[i], colorKey, i, false);
+                }
+            }
+            showVariable(retval, colorKey, RECURSIVE ? params.length : 0, false);
         }
     });
 }

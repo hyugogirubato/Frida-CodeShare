@@ -30,6 +30,7 @@ Replace "DEVICE" with the device or emulator ID and "PACKAGE" with the package n
 - Modify the `EXCLUDES` array to exclude specific function names from interception.
 - Set the `VARIABLE` variable to `true` if you want to attach and display variable values.
 - Set the `FUNCTION` variable to `true` if you want to intercept and display function calls.
+- Set the `RECURSIVE` variable to `true` if you want to display function arguments on output.
 
 ## Output
 
