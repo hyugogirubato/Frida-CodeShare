@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.6 hyugogirubato
+ ** Android Native Interceptor frida script v1.7 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  **
- ** Update: Added recursive display of function arguments.
+ ** Update: Added simple regex support for short function names.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -13,7 +13,7 @@
 // Custom params
 const PACKAGE = "PACKAGE"; // undefined for intercept everything
 const LIBRARIES = ["libnative.so"]; // empty for intercept everything
-const INCLUDES = ["selectedFunction"]; // empty for intercept everything
+const INCLUDES = ["selectedFunction", "^md5$"]; // empty for intercept everything, "^" and/or "$" filter short functions according to regex
 const EXCLUDES = []; // empty for intercept everything
 const VARIABLE = true;  // attach variables
 const FUNCTION = true; // attach functions
@@ -51,17 +51,40 @@ const searchLibraries = () => {
     }
 }
 
+const filterModules = (modules, filters) => {
+    const result = [];
+    for (const module of modules) {
+        const moduleName = module["name"].toLowerCase();
+        for (const filter of filters) {
+            let filterName = filter.toLowerCase();
+            filterName = filterName.startsWith("^") ? filterName.slice(1) : filterName;
+            filterName = filterName.endsWith("$") ? filterName.slice(0, -1) : filterName;
+            if (!moduleName.includes(filterName)) {
+                continue;
+            }
+            if (filter.startsWith("^") && !moduleName.startsWith(filterName)) {
+                continue;
+            }
+            if (filter.endsWith("$") && !moduleName.endsWith(filterName)) {
+                continue;
+            }
+            result.push(module);
+        }
+    }
+    return result;
+}
+
 const searchModules = (library) => {
     let modules = library.enumerateExports();
     if (INCLUDES.length > 0) {
-        modules = modules.filter(mod => INCLUDES.some(include => mod["name"].toLowerCase().includes(include.toLowerCase())));
+        modules = filterModules(modules, INCLUDES);
     }
     if (EXCLUDES.length > 0) {
-        modules = modules.filter(mod => EXCLUDES.every(exclude => !mod["name"].toLowerCase().includes(exclude.toLowerCase())));
+        const excludes = filterModules(modules, EXCLUDES);
+        modules = modules.filter(module => !excludes.some(exclude => exclude["name"] === module["name"]));
     }
     return modules;
 }
-
 
 const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
     let stringData;
