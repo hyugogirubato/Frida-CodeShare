@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.7 hyugogirubato
+ ** Android Native Interceptor frida script v1.8 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  **
- ** Update: Added simple regex support for short function names.
+ ** Update: Added debug information option for library/module/variable
  **
  ***@@@---@@@@******************************************************************
  */
@@ -18,6 +18,7 @@ const EXCLUDES = []; // empty for intercept everything
 const VARIABLE = true;  // attach variables
 const FUNCTION = true; // attach functions
 const RECURSIVE = false; // arguments of the function in output
+const DEBUG = false; // debug information about a library/module/variable
 
 
 let index = 0; // color index
@@ -96,6 +97,10 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
 
     // avoid access violation
     if (stringData) {
+        if (DEBUG) {
+            const debug = JSON.stringify({address: address, ...Process.findRangeByAddress(address)}, null, 0);
+            console.log(`${colorKey}  --> [${argIndex}] Debug: ${debug}${COLORS.reset}`);
+        }
         // String
         console.log(`${colorKey}  --> [${argIndex}] String: ${stringData}${COLORS.reset}`);
 
@@ -194,10 +199,21 @@ setTimeout(function () {
         let variableCount = 0;
         let functionCount = 0;
         for (const library of libraries) {
+            if (DEBUG) {
+                console.log(JSON.stringify(library, null, 2));
+            }
             const modules = searchModules(library);
             const fileName = library["path"].substring(library["path"].lastIndexOf("/") + 1);
             console.log(`[>] Attach: ${fileName} (${modules.length})`);
             for (const module of modules) {
+                if (DEBUG) {
+                    const debug = JSON.stringify({
+                        library: library["name"],
+                        ...module,
+                        ...Process.findRangeByAddress(module["address"])
+                    }, null, 2);
+                    console.log(debug);
+                }
                 try {
                     if (module["type"] === "variable" && (VARIABLE || FUNCTION)) {
                         variableCount++;
