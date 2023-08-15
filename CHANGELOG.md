@@ -7,6 +7,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [1.1.4] - 2023-08-15
 
+### Added
+
 - **Native**: Added debug information option for library/module/variable
 
 ## [1.1.3] - 2023-08-06
