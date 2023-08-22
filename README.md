@@ -9,6 +9,10 @@
 
 </div>
 
+> **Warning**
+>
+> An error has been observed with the native script concerning the automatic detection of the number of arguments of a function. This feature will be fixed soon.
+
 This repository contains a collection of Frida scripts for intercepting and modifying the behavior of Android apps at
 runtime. These scripts leverage the power of Frida, a dynamic instrumentation tool, to hook into the target app's Java
 and native code and perform various actions such as logging function calls, modifying function parameters, capturing
