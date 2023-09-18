@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Crypto Interceptor frida script v1.3 hyugogirubato
+ ** Android Crypto Interceptor frida script v1.4 hyugogirubato
  **
  ** frida -D "DEVICE" -l "crypto.js" -f "PACKAGE"
  **
- ** Update: Added Hex output when the size matches a classic standard.
+ ** Update: Removed detection of UUID form in hex format.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -59,11 +59,6 @@ const bytesToBase64 = (bytes) => {
     return null;
 }
 
-const isUUID = (hex) => {
-    const uuidPattern = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
-    return uuidPattern.test(hex);
-}
-
 const Base64ToHex = (base64) => {
     const bytes = BASE64.getDecoder().decode(base64);
     let hexData = "";
@@ -86,7 +81,7 @@ const showVariable = (module, items, colorKey, hexValue = false) => {
         if (items[i].key.includes("Base64") && items[i].value !== null) {
             const key = items[i].key.replace("Base64", "HEX");
             const value = Base64ToHex(items[i].value);
-            if ((!value.includes("-") && [32, 40, 48, 64].includes(value.length)) || isUUID(value) || hexValue) {
+            if ((!value.includes("-") && [32, 40, 48, 64].includes(value.length)) || hexValue) {
                 console.log(`${colorKey}  --> [${i}] ${key}: ${value}${COLORS.reset}`);
             }
         }

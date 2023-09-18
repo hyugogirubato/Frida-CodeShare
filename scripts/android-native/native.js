@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.8 hyugogirubato
+ ** Android Native Interceptor frida script v1.9 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  **
- ** Update: Added debug information option for library/module/variable
+ ** Update: Support for the Integer type for return codes.
  **
  ***@@@---@@@@******************************************************************
  */
@@ -36,11 +36,6 @@ const randomColor = () => {
     const colorKeys = Object.keys(COLORS).filter(key => key !== "reset" && key !== "red");
     index = (index + 1) % colorKeys.length;
     return COLORS[colorKeys[index]];
-}
-
-const isUUID = (hex) => {
-    const uuidPattern = /^[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}$/;
-    return uuidPattern.test(hex);
 }
 
 const searchLibraries = () => {
@@ -136,7 +131,7 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
             console.log(`${colorKey}  --> [${argIndex}] Pointer: 0x${hexData}${COLORS.reset}`);
         } else {
             // Hex
-            if ((!hexData.includes("-") && [32, 40, 48, 64].includes(hexData.length)) || isUUID(hexData) || hexValue) {
+            if ((!hexData.includes("-") && [32, 40, 48, 64].includes(hexData.length)) || hexValue) {
                 console.log(`${colorKey}  --> [${argIndex}] Hex: ${hexData}${COLORS.reset}`);
             }
 
@@ -147,34 +142,51 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
                 console.log(`${colorKey}  --> [${argIndex}] Base64: ${base64Data}${COLORS.reset}`);
             });
         }
+    } else {
+        console.log(`${colorKey}  --> [${argIndex}] Integer: ${parseInt(address, 16)}${COLORS.reset}`);
     }
+}
+
+const argsCount = (args) => {
+    let count = 0;
+    while (true) {
+        try {
+            const tmp = new NativePointer(args[count]);
+            tmp.readPointer();
+            count += 1;
+        } catch (e) {
+            break
+        }
+    }
+    return count;
 }
 
 const attachFunction = (module) => {
     console.log(`[*] Module attached: ${module["name"]}`);
     const colorKey = randomColor();
-    const params = [];
-    Interceptor.attach(module["address"], {
+    const params = {};
+    const address = module["address"];
+    Interceptor.attach(address, {
         onEnter: function (args) {
             console.log(`${colorKey}[+] onEnter: ${module["name"]}${COLORS.reset}`);
 
-            // RangeError Patch
-            for (let i = 0; i < 10; i++) {
-                if (args[i].toString().length !== 12) {
-                    break;
-                }
+            // RangeError Patch + args counter
+            params[address] = [];
+            for (let i = 0; i < argsCount(args); i++) {
                 showVariable(args[i], colorKey, i, false);
-                params.push(args[i]);
+                params[address].push(args[i]);
             }
         },
         onLeave: function (retval) {
             console.log(`${colorKey}[-] onLeave: ${module["name"]}${COLORS.reset}`);
             if (RECURSIVE) {
-                for (let i = 0; i < params.length; i++) {
-                    showVariable(params[i], colorKey, i, false);
+                for (let i = 0; i < params[address].length; i++) {
+                    showVariable(params[address][i], colorKey, i, false);
                 }
             }
-            showVariable(retval, colorKey, RECURSIVE ? params.length : 0, false);
+
+            showVariable(retval, colorKey, RECURSIVE ? params[address].length : 0, false);
+            delete params[address];
         }
     });
 }
