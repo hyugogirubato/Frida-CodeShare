@@ -169,9 +169,9 @@ const attachFunction = (module) => {
     Interceptor.attach(address, {
         onEnter: function (args) {
             console.log(`${colorKey}[+] onEnter: ${module["name"]}${COLORS.reset}`);
-
-            const numArgs = Instruction.parse(address).operands.length;
-            console.log("Instruction args:", numArgs);
+            
+            // TODO: Debug
+            console.log("Instruction args:", Instruction.parse(address).operands.length);
             console.log("Manual args:", argsCount(args));
             return;
 
@@ -184,7 +184,8 @@ const attachFunction = (module) => {
             }
         },
         onLeave: function (retval) {
-            return
+            // TODO: Debug
+            return;
 
             console.log(`${colorKey}[-] onLeave: ${module["name"]}${COLORS.reset}`);
             if (RECURSIVE) {
