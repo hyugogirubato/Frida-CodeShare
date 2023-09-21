@@ -1,104 +1,188 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Native Interceptor frida script v1.9 hyugogirubato
+ ** Native Interceptor frida script v2.0 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
+ ** frida "C:\Program Files\StreamFab\Producer\Software.exe" -l native.js
  **
- ** Update: Support for the Integer type for return codes.
+ ** Update: Full update, bug fixes and new features.
  **
  ***@@@---@@@@******************************************************************
  */
 
 
-// Custom params
-const PACKAGE = "PACKAGE"; // undefined for intercept everything
-const LIBRARIES = ["libnative.so"]; // empty for intercept everything
-const INCLUDES = ["selectedFunction", "^md5$"]; // empty for intercept everything, "^" and/or "$" filter short functions according to regex
-const EXCLUDES = []; // empty for intercept everything
-const VARIABLE = true;  // attach variables
-const FUNCTION = true; // attach functions
-const RECURSIVE = false; // arguments of the function in output
-const DEBUG = false; // debug information about a library/module/variable
+/**
+ * Use only the name for a classic interception.
+ * Using an object when manually adding modules.
+ */
+const LIBRARIES = [
+    "libnative-lib.so",
+    "libcrypto.so",
+    {
+        "name": "Software.exe",
+        "modules": [
+            {"type": "function", "name": "sub_14000BC30", "address": "0x14000BC30"},
+            {"type": "function", "name": "sub_14000BCA0", "address": "0x14000BCA0"},
+            {"type": "function", "name": "sub_14000DF50", "address": "0x14000DF50"}
+        ]
+    }
+];
+
+/**
+ * Use the application package name to intercept only application-related processes.
+ * Using the Binary Path to only intercept binary-related processes.
+ * Use "undefined" to intercept all running processes (system included).
+ */
+const PACKAGE = "PACKAGE";
 
 
-let index = 0; // color index
+/**
+ * Filter processes attached to a string or regex value.
+ * Using an empty field to catch everything.
+ */
+const INCLUDES = ["selectedFunction", /^md5$/, "anotherNativeFunction"];
+const EXCLUDES = [/create.*token$/];
+const EXTENSIONS = [".so", ".dll", /\.exe$/];
+
+
+/**
+ * Customize output display:
+ * - COLOR: Colorize the output.
+ * - TIMEOUT: Waiting time before attaching processes.
+ * - VARIABLE: Attach variables.
+ * - FUNCTION: Attach functions.
+ * - RECURSIVE: Arguments of the function in output.
+ * - DEBUG: Additional information on the current process.
+ */
+const COLOR = true;
+const TIMEOUT = 0;
+const VARIABLE = true;
+const FUNCTION = true;
+const RECURSIVE = false;
+const DEBUG = false;
+
+// Constants
+let current = 0;
 const COLORS = {
+    reset: '\x1b[0m',
     red: '\x1b[31m',
     green: '\x1b[32m',
     yellow: '\x1b[33m',
     blue: '\x1b[34m',
     magenta: '\x1b[35m',
     cyan: '\x1b[36m',
-    reset: '\x1b[0m'
+    // white: '\x1b[37m'
 };
 
-const randomColor = () => {
-    const colorKeys = Object.keys(COLORS).filter(key => key !== "reset" && key !== "red");
-    index = (index + 1) % colorKeys.length;
-    return COLORS[colorKeys[index]];
+
+const Color = () => {
+    const keys = Object.keys(COLORS).filter(key => key !== "reset" && key !== "red");
+    current = (current + 1) % keys.length;
+    return keys[current];
+}
+
+const print = (data, color) => {
+    console.log(color && COLOR ? `${COLORS[color]}${data}${COLORS.reset}` : data);
 }
 
 const searchLibraries = () => {
-    let libraries = Process.enumerateModules().filter(lib => PACKAGE ? lib["path"].toLowerCase().includes(PACKAGE.toLowerCase()) : true);
-    if (LIBRARIES.length > 0) {
-        return libraries.filter(lib => LIBRARIES.some(library => lib["path"].toLowerCase().includes(library) && lib["path"].toLowerCase().endsWith(".so")));
-    } else {
-        return libraries.filter(lib => lib["path"].toLowerCase().endsWith(".so"));
+    // Package
+    let libraries = Process.enumerateModules().filter((l) =>
+        PACKAGE ? l["path"].toLowerCase().includes(PACKAGE.toLowerCase()) : true
+    );
+
+    // Extensions
+    if (EXTENSIONS.length > 0) {
+        libraries = libraries.filter((l) =>
+            EXTENSIONS.some((e) =>
+                e instanceof RegExp
+                    ? l["path"].match(e)
+                    : l["path"].toLowerCase().endsWith(e.toLowerCase())
+            )
+        );
     }
+
+    // Libraries
+    if (LIBRARIES.length > 0) {
+        libraries = libraries.filter((l) =>
+            LIBRARIES.some((L) =>
+                L instanceof Object
+                    ? l["name"].toLowerCase().includes(L["name"].toLowerCase())
+                    : l["name"].toLowerCase().includes(L)
+            )
+        );
+    }
+    return libraries;
 }
 
 const filterModules = (modules, filters) => {
-    const result = [];
-    for (const module of modules) {
-        const moduleName = module["name"].toLowerCase();
-        for (const filter of filters) {
-            let filterName = filter.toLowerCase();
-            filterName = filterName.startsWith("^") ? filterName.slice(1) : filterName;
-            filterName = filterName.endsWith("$") ? filterName.slice(0, -1) : filterName;
-            if (!moduleName.includes(filterName)) {
-                continue;
+    return modules.filter((m) => {
+        return filters.some((f) => {
+            if (f instanceof RegExp) {
+                return m["name"].match(f);
+            } else {
+                return m["name"].toLowerCase().includes(f.toLowerCase());
             }
-            if (filter.startsWith("^") && !moduleName.startsWith(filterName)) {
-                continue;
-            }
-            if (filter.endsWith("$") && !moduleName.endsWith(filterName)) {
-                continue;
-            }
-            result.push(module);
-        }
-    }
-    return result;
+        })
+    });
 }
 
 const searchModules = (library) => {
     let modules = library.enumerateExports();
+
+    // Libraries
+    if (LIBRARIES.length > 0) {
+        for (const l of LIBRARIES) {
+            if (l instanceof Object) {
+                if (library["name"].toLowerCase().includes(l["name"].toLowerCase())) {
+                    l["modules"].forEach((m) => {
+                        if (!modules.some((obj) => JSON.stringify(obj) === JSON.stringify(m))) {
+                            modules.push(m);
+                        }
+                    });
+                }
+            }
+        }
+    }
+
+    // Address pointer
+    modules = modules.map(m => ({...m, address: ptr(m["address"])}));
+
+    // Includes
     if (INCLUDES.length > 0) {
         modules = filterModules(modules, INCLUDES);
     }
+
+    // Excludes
     if (EXCLUDES.length > 0) {
         const excludes = filterModules(modules, EXCLUDES);
-        modules = modules.filter(module => !excludes.some(exclude => exclude["name"] === module["name"]));
+        modules = modules.filter(m => !excludes.some(e => e["name"] === m["name"]));
     }
+
     return modules;
 }
 
-const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
+const printMemory = (address, index, color) => {
+    if (DEBUG) {
+        print(JSON.stringify({
+            address: address,
+            ...Process.findRangeByAddress(address)
+        }, null, 2));
+    }
+
+    // Fix Access violation
     let stringData;
     try {
         stringData = Memory.readCString(address);
     } catch (e) {
-        console.log(`${COLORS.red}${e}${COLORS.reset}`);
+        print(e, "red");
     }
 
-    // avoid access violation
     if (stringData) {
-        if (DEBUG) {
-            const debug = JSON.stringify({address: address, ...Process.findRangeByAddress(address)}, null, 0);
-            console.log(`${colorKey}  --> [${argIndex}] Debug: ${debug}${COLORS.reset}`);
-        }
         // String
-        console.log(`${colorKey}  --> [${argIndex}] String: ${stringData}${COLORS.reset}`);
+        print(`  --> [${index}] String: ${stringData}`, color);
 
+        // Bytes
         let ptr = new NativePointer(address);
         let size = 0;
         while (ptr.add(size).readU8() !== 0) {
@@ -122,32 +206,44 @@ const showVariable = (address, colorKey, argIndex = 0, hexValue = false) => {
         }
 
         if (!isNaN(intValue)) {
-            console.log(`${colorKey}  --> [${argIndex}] Integer: ${intValue}${COLORS.reset}`);
+            print(`  --> [${index}] Integer: ${intValue}`, color);
         }
 
+        // Pointer
         const hexData = Array.from(byteArrayView, byte => byte.toString(16).padStart(2, "0")).join("");
         if (hexData.length === 10) {
-            // Pointer
-            console.log(`${colorKey}  --> [${argIndex}] Pointer: 0x${hexData}${COLORS.reset}`);
-        } else {
-            // Hex
-            if ((!hexData.includes("-") && [32, 40, 48, 64].includes(hexData.length)) || hexValue) {
-                console.log(`${colorKey}  --> [${argIndex}] Hex: ${hexData}${COLORS.reset}`);
-            }
+            print(`  --> [${index}] Pointer: 0x${hexData}`, color);
+        }
 
-            // Base64
+        // Base64
+        let hexValue = false;
+        if (Java.available) {
             Java.perform(function () {
                 const byteBuffer = Java.array("byte", byteArrayView);
                 const base64Data = Java.use("java.util.Base64").getEncoder().encodeToString(byteBuffer);
-                console.log(`${colorKey}  --> [${argIndex}] Base64: ${base64Data}${COLORS.reset}`);
+                print(`  --> [${index}] Base64: ${base64Data}`, color);
             });
+        } else {
+            hexValue = true;
+        }
+
+        // Hex
+        if ((!hexData.includes("-") && [32, 40, 48, 64].includes(hexData.length)) || hexValue) {
+            print(`  --> [${index}] Hex: ${hexData}`, color);
         }
     } else {
-        console.log(`${colorKey}  --> [${argIndex}] Integer: ${parseInt(address, 16)}${COLORS.reset}`);
+        print(`  --> [${index}] Integer: ${parseInt(address, 16)}`, color);
     }
 }
 
-const argsCount = (args) => {
+const attachVariable = (module) => {
+    const color = Color();
+    print(`[+] VarEnter: ${module["name"]}`, color);
+    printMemory(module["address"], 0, color);
+    print(`[-] VarLeave: ${module["name"]}`, color);
+}
+
+const paramsCount = (args) => {
     let count = 0;
     while (true) {
         try {
@@ -155,77 +251,68 @@ const argsCount = (args) => {
             tmp.readPointer();
             count += 1;
         } catch (e) {
-            break
+            break;
         }
     }
     return count;
 }
 
 const attachFunction = (module) => {
-    console.log(`[*] Module attached: ${module["name"]}`);
-    const colorKey = randomColor();
-    const params = {};
+    print(`[*] Module attached: ${module["name"]}`);
+    const color = Color();
     const address = module["address"];
+    const params = {};
+
     Interceptor.attach(address, {
         onEnter: function (args) {
-            console.log(`${colorKey}[+] onEnter: ${module["name"]}${COLORS.reset}`);
+            print(`[+] onEnter: ${module["name"]}`, color);
 
-            // RangeError Patch + args counter
+            // Fix RangeError
             params[address] = [];
-            for (let i = 0; i < argsCount(args); i++) {
-                showVariable(args[i], colorKey, i, false);
+            for (let i = 0; i < paramsCount(args); i++) {
+                printMemory(args[i], i, color);
                 params[address].push(args[i]);
             }
         },
         onLeave: function (retval) {
-            console.log(`${colorKey}[-] onLeave: ${module["name"]}${COLORS.reset}`);
+            print(`[-] onLeave: ${module["name"]}`, color);
+
             if (RECURSIVE) {
                 for (let i = 0; i < params[address].length; i++) {
-                    showVariable(params[address][i], colorKey, i, false);
+                    printMemory(params[address][i], i, color);
                 }
             }
 
-            showVariable(retval, colorKey, RECURSIVE ? params[address].length : 0, false);
+            printMemory(retval, RECURSIVE ? params[address].length : 0, color);
             delete params[address];
         }
     });
 }
 
-const attachVariable = (module) => {
-    const colorKey = randomColor();
-    console.log(`${colorKey}[+] VarEnter: ${module["name"]}${COLORS.reset}`);
-    showVariable(module["address"], colorKey, 0, false);
-    console.log(`${colorKey}[-] VarLeave: ${module["name"]}${COLORS.reset}`);
-}
-
 
 setTimeout(function () {
-    console.log("---");
-    console.log("Capturing Android app...");
+    print("Capturing Native process...\n---");
 
-    // Native
     const libraries = searchLibraries();
     if (libraries.length > 0) {
-        console.log(`[*] Native libraries found (${libraries.length})`);
-
+        print(`[*] Native libraries found (${libraries.length})`);
         let variableCount = 0;
         let functionCount = 0;
         for (const library of libraries) {
             if (DEBUG) {
-                console.log(JSON.stringify(library, null, 2));
+                print(JSON.stringify(library, null, 2));
             }
             const modules = searchModules(library);
-            const fileName = library["path"].substring(library["path"].lastIndexOf("/") + 1);
-            console.log(`[>] Attach: ${fileName} (${modules.length})`);
+            print(`[>] Attach: ${library["name"]} (${modules.length})`);
             for (const module of modules) {
                 if (DEBUG) {
-                    const debug = JSON.stringify({
+                    print(JSON.stringify({
                         library: library["name"],
                         ...module,
                         ...Process.findRangeByAddress(module["address"])
-                    }, null, 2);
-                    console.log(debug);
+                    }, null, 2));
                 }
+
                 try {
                     if (module["type"] === "variable" && (VARIABLE || FUNCTION)) {
                         variableCount++;
@@ -235,16 +322,16 @@ setTimeout(function () {
                         attachFunction(module);
                     }
                 } catch (e) {
-                    console.log(`${COLORS.red}${e}${COLORS.reset}`);
+                    print(e, "red");
                 }
             }
         }
-        console.log(`[>] Variables count: ${variableCount}`);
-        console.log(`[>] Functions count: ${functionCount}`);
+
+        print(`[>] Variables count: ${variableCount}`);
+        print(`[>] Functions count: ${functionCount}`);
     } else {
-        console.log(`${COLORS.red}[!] No native library found${COLORS.reset}`);
+        print("[!] No native library found", "red");
     }
 
-    console.log("Capturing setup completed");
-    console.log("---");
-}, 0);
+    print("Capturing setup completed\n---");
+}, TIMEOUT);
