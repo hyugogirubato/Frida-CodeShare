@@ -145,7 +145,7 @@ const searchModules = (library) => {
         }
     }
 
-    // Address pointer
+    // Address
     modules = modules.map(m => ({...m, address: ptr(m["address"])}));
 
     // Includes
