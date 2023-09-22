@@ -3,7 +3,7 @@
  ** Native Interceptor frida script v2.0 hyugogirubato
  **
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
- ** frida "C:\Program Files\StreamFab\Producer\Software.exe" -l native.js
+ ** frida "C:\Program Files\Producer\Software.exe" -l native.js
  **
  ** Update: Full update, bug fixes and new features.
  **
