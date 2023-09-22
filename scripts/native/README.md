@@ -1,6 +1,6 @@
 # Native Interceptor
 
-[![Version](https://img.shields.io/badge/Version-v2.0-blue)](https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.2.0)
+[![Version](https://img.shields.io/badge/Version-v2.0-blue)](https://codeshare.frida.re/@hyugogirubato/android-native-interceptor)
 
 The Native Interceptor is a frida script that allows you to intercept and monitor function calls in native libraries and
 processes. This script provides a wide range of customization options to help you capture and analyze the behavior of
