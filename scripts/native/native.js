@@ -5,7 +5,7 @@
  ** frida -D "DEVICE" -l "native.js" -f "PACKAGE"
  ** frida "C:\Program Files\Producer\Software.exe" -l native.js
  **
- ** Update: Full update, bug fixes and new features.
+ ** Update: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.2.0
  **
  ***@@@---@@@@******************************************************************
  */
@@ -16,7 +16,7 @@
  * Using an object when manually adding modules.
  */
 const LIBRARIES = [
-    "libnative-lib.so",
+    "libnative.so",
     "libcrypto.so",
     {
         "name": "Software.exe",

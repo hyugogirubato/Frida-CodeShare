@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres
 to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2023-09-22
+
+## Added
+
+- **Native**: Possibility of adding addresses manually to attached by library.
+- **Native**: Color activation choice option (support non-colored shell).
+- **Native**: Added staggered boot option.
+- **Native**: Multiple extension support (`.so`, `.dll`, `.exe`, etc..)
+
+### Changed
+
+- **Native**: Script adapted to support Windows and Linux in addition to Android.
+- **Native**: Code rewriting and optimization.
+- **Native**: Full regex support for some options.
+- **Native**: Improved debug information.
+- **Native**: Readme update.
+
+## Fixed
+
+- **Native**: Base64 display correction (Hex display if Java not available).
+
 ## [1.1.5] - 2023-09-18
 
 ### Added
@@ -84,6 +105,7 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - Initial Release.
 
+[1.2.0]: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.2.0
 [1.1.5]: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.1.5
 [1.1.4]: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.1.4
 [1.1.3]: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.1.3
