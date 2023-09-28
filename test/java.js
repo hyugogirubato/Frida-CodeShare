@@ -1,8 +1,8 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Android Java Interceptor frida script v1.1 hyugogirubato
+ ** Android Java Interceptor frida script v1.1 hyugogirubato (Test)
  **
- ** frida -D "DEVICE" -l "java.js" -f "PACKAGE"
+ ** frida -D "DEVICE" -l "java.js" -f "com.crunchyroll.crunchyroid"
  **
  ** Update: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.2.1
  **
@@ -17,8 +17,8 @@
  */
 const LIBRARIES = [
     {
-        "name": "com.android.example.ui.service",
-        "methods": ["loadNative"]
+        "name": "com.ellation.crunchyroll.api.etp.content.EtpContentServiceDecorator",
+        "methods": []
     },
     {
         "name": "android.webkit.WebView",
