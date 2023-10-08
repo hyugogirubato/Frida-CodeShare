@@ -1,10 +1,10 @@
 /**@@@+++@@@@******************************************************************
  **
- ** Native Interceptor frida script v2.0 hyugogirubato (Test)
+ ** Native Interceptor frida script v2.1 hyugogirubato (Test)
  **
  ** frida -D "DEVICE" -l "native.js" -f "com.hidive.android"
  **
- ** Update: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.2.0
+ ** Update: https://github.com/hyugogirubato/Frida-CodeShare/releases/tag/v1.2.2
  **
  ***@@@---@@@@******************************************************************
  */
@@ -98,7 +98,7 @@ const searchLibraries = () => {
             LIBRARIES.some((L) =>
                 L instanceof Object
                     ? l["name"].toLowerCase().includes(L["name"].toLowerCase())
-                    : l["name"].toLowerCase().includes(L)
+                    : l["name"].toLowerCase().includes(L.toLowerCase())
             )
         );
     }
