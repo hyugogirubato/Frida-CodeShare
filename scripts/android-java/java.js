@@ -17,13 +17,30 @@
  */
 const LIBRARIES = [
     {
-        "name": "com.android.example.ui.service",
-        "methods": ["loadNative"]
+        "name": "okhttp3.ResponseBody",
+        "methods": []
     },
     {
-        "name": "android.webkit.WebView",
+        "name": "okhttp3.OkHttpClient",
+        "methods": []
+    },
+    {
+        "name": "okhttp3.HttpUrl",
+        "methods": []
+    },
+    {
+        "name": "okhttp3.Response",
+        "methods": []
+    },
+    {
+        "name": "okhttp3.Request",
+        "methods": []
+    },
+    {
+        "name": "okhttp3.Headers",
         "methods": []
     }
+
 ];
 
 /**
