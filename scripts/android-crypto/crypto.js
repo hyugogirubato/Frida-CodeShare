@@ -53,7 +53,12 @@ const bytesToBase64 = (bytes) => {
         try {
             return BASE64.getEncoder().encodeToString(bytes);
         } catch {
-            return BASE64.getEncoder().encodeToString([bytes & 0xff]);
+            try {
+                return BASE64.getEncoder().encodeToString([bytes & 0xff]);
+            } catch {
+                console.log(`Failed B64: ${bytes}`);
+            }
+            
         }
     }
     return null;
