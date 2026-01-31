@@ -104,8 +104,7 @@ const searchLibraries = () => {
         libraries = libraries.map((l) => ({
             ...l,
             classes: l["classes"].filter((c) => LIBRARIES.some((L) =>
-                (L["name"] instanceof RegExp && c["name"].match(L["name"])) ||
-                c["name"].toLowerCase().includes(L["name"].toLowerCase())
+                L["name"] instanceof RegExp ? c["name"].match(L["name"]) : c["name"].toLowerCase().includes(L["name"].toLowerCase())
             ))
         })).filter(l => l["classes"].length > 0);
     }
