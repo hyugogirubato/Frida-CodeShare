@@ -106,10 +106,7 @@ function print(message, color) {
 // @Utils - Human-readable memory reader
 // ---------------------------------------------
 
-/**
- * Read raw bytes from a pointer address.
- * Returns a Uint8Array or null if unreadable.
- */
+/** Read raw bytes from a pointer address. Returns a Uint8Array or null if unreadable. */
 function readBytes(address) {
     try {
         const p = new NativePointer(address);
@@ -130,7 +127,6 @@ function readBytes(address) {
     }
 }
 
-
 /** Check if bytes are mostly printable ASCII/UTF-8 (>80% threshold). */
 function isPrintable(bytes) {
     if (!bytes || bytes.length === 0) return false;
@@ -144,7 +140,6 @@ function isPrintable(bytes) {
     }
     return (printable / bytes.length) > 0.8;
 }
-
 
 /** Convert bytes to hex string with optional separator. */
 function toHex(bytes, sep = '') {
