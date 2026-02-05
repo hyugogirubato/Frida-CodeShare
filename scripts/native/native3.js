@@ -755,8 +755,18 @@ function readValue(address, argType = '', context = {}, depth = 0) {
 function formatValue(index, argDesc, address, direction, context = {}) {
     if (CONFIG.debug) {
         try {
+            /*
+            {
+              "address": "0xb400007c802f4cf8",
+              "context": {},
+              "type": "_QWORD",
+              "name": "*a1@<X8>"
+            }
+             */
             Logger.print(JSON.stringify({
                 address: address,
+                context: context,
+                ...argDesc,
                 ...Process.findRangeByAddress(address)
             }, null, 2), Logger.COLOR.BLUE);
         } catch (e) {
