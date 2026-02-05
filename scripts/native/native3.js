@@ -780,7 +780,6 @@ function formatValue(index, argDesc, address, direction, context = {}) {
 
     lines.push(`${prefix}(${argDesc.type}) ${argDesc.name} = ${address}`);
 
-    // const interpretations = readValue(address, argDesc.type, context);
     const interpretations = readValue(address, argDesc.type, context);
     for (const interp of interpretations) {
         const sizeInfo = interp.size ? `[${interp.size}]` : '';
