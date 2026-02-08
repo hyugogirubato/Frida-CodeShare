@@ -116,6 +116,29 @@ const CONFIG = {
     debug: false
 };
 
+
+// Backward compatibility with the modern equivalent implemented since frida 17
+// https://frida.re/news/2025/05/17/frida-17-0-0-released/
+/*
+readS8 = readShort
+readU8 = readUShort
+readS16 = readInt
+readU16 = readUInt
+readS32 = readFloat
+readU32 = readDouble
+
+console.log(hexdump(address, {
+    offset: 0,
+    length: 128,
+    header: true,
+    ansi: true
+}));
+ */
+Memory = typeof Memory === 'undefined' ? {} : Memory;
+Memory.readByteArray ??= (address, length) => address.readByteArray(length);
+Memory.readPointer ??= (address) => address.readPointer();
+Memory.readU16 ??= (address) => address.readU16();
+
 // ---------------------------------------------
 // @Logger - Colored console output
 // ---------------------------------------------
@@ -320,7 +343,7 @@ function bytesToString(bytes) {
  * @param {NativePointer} address - Pointer to std::string
  * @returns {Uint8Array|null} - String data as byte array
  */
-function readStdString(address) {
+Memory.readStdString = function (address) {
     try {
         const p = new NativePointer(address);
         // Read string size at offset pointerSize
@@ -350,7 +373,7 @@ function readStdString(address) {
  * @param {NativePointer} address - Pointer to std::vector
  * @returns {Uint8Array|null} - Vector data as byte array
  */
-function readStdVector(address) {
+Memory.readStdVector = function (address) {
     try {
         const p = new NativePointer(address);
         // Vector layout: [begin_ptr, end_ptr, capacity_ptr] or similar
@@ -522,7 +545,7 @@ function readValue(address, argType = '', context = {}, depth = 0) {
     // 4. STD::STRING (libc++ with SSO)
     // ---------------------------------------------
     try {
-        const stdstring = readStdString(p);
+        const stdstring = Memory.readStdString(p);
         if (stdstring && stdstring.length > 0) {
             results.push({
                 type: 'StdString',
@@ -563,7 +586,7 @@ function readValue(address, argType = '', context = {}, depth = 0) {
     // 5. STD::VECTOR
     // ---------------------------------------------
     try {
-        const stdvector = readStdVector(p);
+        const stdvector = Memory.readStdVector(p);
         if (stdvector && stdvector.length > 0) {
             results.push({
                 type: 'StdVector',
@@ -980,6 +1003,7 @@ function getLibrary(name) {
 function getFunctions(library) {
     try {
         // https://frida.re/news/2025/01/09/frida-16-6-0-released/
+        // TODO: Frida.version;
         const functions = library.enumerateSymbols().map(item => ({
             type: item.type,
             name: item.name,
